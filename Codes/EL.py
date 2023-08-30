@@ -8,6 +8,7 @@ from sqlalchemy import create_engine
 # from database_connection import database_connect
 
 
+
 def save_table(df_table, table_name, db_name='data_sources'):
     """
     function to save a data table in the postgresql database
@@ -19,7 +20,8 @@ def save_table(df_table, table_name, db_name='data_sources'):
     """
 
     engine = create_engine(f'postgresql://postgres:postgres@localhost:5432/{db_name}')
-    df_table.to_sql(table_name, engine, index=False, if_exists="append")
+    df_table.to_sql(table_name, engine, index=False, if_exists="replace")
+
 
 
 
@@ -38,6 +40,9 @@ def   Adding_specific_columns_with_randomly_duplicated_or_unique_values(dataset,
 
     return dataset
 
+
+
+
 def load_data():
     """
     function to load data
@@ -45,12 +50,13 @@ def load_data():
     return: df_training, df_test
     """
     data1 = pd.read_csv(os.path.join(os.getcwd(),"UIZ.CARE_Data_Structure_for_Training ML_Phase_2.csv"), sep = ";", header=0)
-    print(data1)
 
     data2 = pd.read_csv(os.path.join(os.getcwd(),"UIZ.CARE_Test_Data_August_2023-Vs2.csv"), sep = ";")
-    print(data2)
     
     return data1, data2
+
+
+
 
 def data1_preprocessing(data1):
     """
@@ -77,8 +83,21 @@ def data1_preprocessing(data1):
     # Change the name of the last column
     new_column_name = 'Disease'  # Replace this with the new name you want
     data1.rename(columns={data1.columns[-1]: new_column_name}, inplace=True)
+    
+    
+    # Update column names to lowercase
+    data1.columns = data1.columns.str.lower()
 
     return data1
+
+
+
+
+# Transformation in the second dataframe
+def transformation_2nd_df(dataframe):
+    dataframe.columns = dataframe.columns.str.lower()
+    return dataframe
+
 
 
 
@@ -93,23 +112,28 @@ def combining_the_two_datasets(data1, data2):
     """
     # Define the column names to merge on
     columns_to_merge = ['id', 'first_name', 'last_name', 'email', 'gender', 'ip_address',
-        'Adress', 'GP first_name', 'GP last_name', 'Country', 'GP address',
-        'GP postal_code', 'GP country', 'GP phone_number']
+        'adress', 'gp first_name', 'gp last_name', 'country', 'gp address',
+        'gp postal_code', 'gp country', 'gp phone_number']
+   
+    
+    data2 = transformation_2nd_df(data2)
 
+    
     # Convert 'GP postal_code' column to object type in the second DataFrame df_test
-    data2['GP postal_code'] = data2['GP postal_code'].astype(data1['GP postal_code'].dtype)
+    data2['gp postal_code'] = data2['gp postal_code'].astype(data1['gp postal_code'].dtype)
+    
+    # print(data2['gp postal_code'].dtype)
+    # print(data1['gp postal_code'].dtype)
 
     # Concatenating DataFrames horizontally
     df = pd.concat([data1, data2], axis=1)
-
+    
+    
     # Removing duplicate columns
     df = df.loc[:, ~df.columns.duplicated()]
-
+    
     return df
-
-data1, data2 = load_data()
-df = data1_preprocessing(data1)
-df = combining_the_two_datasets(df, data2)
+    
 
 def symptoms_table_creation_and_saving():
     """
@@ -117,36 +141,37 @@ def symptoms_table_creation_and_saving():
     
     return None
     """
-    symptoms_data_to_keep = ['Cough',
-        'Difficulty Breathing ', 'Fatigue', 'Fever', 'Headaches', 'Body Pain',
-        'Loss of tates and smell', 'Runny Nose ', 'Sneezing ', 'Wheezing',
-        'Vomitting ', 'Sore Throat ', 'Disease']
+    symptoms_data_to_keep = ['id', 'cough',
+       'difficulty breathing ', 'fatigue', 'fever', 'headaches', 'body pain',
+       'loss of tates and smell', 'runny nose ', 'sneezing ', 'wheezing',
+       'vomitting ', 'sore throat ', 'disease']
     
     df_symptoms = df[symptoms_data_to_keep].copy()
     # Adding a 'timestamp' column
-    df_symptoms['Timestamp'] = '18/08/2023'
+    df_symptoms['timestamp'] = '18/08/2023'
 
 
     # Define the target table name
     table_name = "symptoms"
     save_table(df_symptoms, table_name)
-
-symptoms_table_creation_and_saving()
-
+    
+    
+    
+    
 def wearable_table_creation():
     """
     function to create and save the wearable table into the postgresql
     
     return None
     """
-    wearable_data_to_keep = ['heart_rate','blood_pressure', 'intensity', 'body_temperature',
+    wearable_data_to_keep = ['id', 'heart_rate','blood_pressure', 'intensity', 'body_temperature',
                             'respiratory_rate', 'stress_level', 'blood_oxygen_level','steps', \
                                 'calories_burned','trigger', 'sleep_duration']
     
     columns_to_add = {
-        'Model': ['Serie 8', 'Serie7', 'Ultra'],
-        'Device': ['Fitbit', 'Apple'],
-        'Timestamp': '18/08/2023'
+        'model': ['serie 8', 'serie7', 'ultra'],
+        'device': ['fitbit', 'apple'],
+        'timestamp': '18/08/2023'
     }
     
     df_wearable = df[wearable_data_to_keep].copy()
@@ -156,9 +181,7 @@ def wearable_table_creation():
 
     table_name = "wearable"
     save_table(df_wearable, table_name)
-
-wearable_table_creation()
-
+    
 def emotional_table_creation_saving():
     """
     function to create and save the wearable table into the postgresql
@@ -166,16 +189,16 @@ def emotional_table_creation_saving():
     return None
     """
     
-    emotional_data_to_keep = ['emotion_id', 'heart_rate','emotion_type', 'emotion_date',
+    emotional_data_to_keep = ['id', 'emotion_id', 'heart_rate','emotion_type', 'emotion_date',
         'emotion_time', 'emotion_duration', 'trigger', 'mood']
     
     df_emotional = df[emotional_data_to_keep].copy()
 
     # Dictionary of columns to add with their respective values to duplicate
     columns_to_add = {
-        'Model': ['Serie 8', 'Serie7', 'Ultra'],
-        'Device': ['Fitbit', 'Apple'],
-        'Timestamp': '18/08/2023'
+        'model': ['serie 8', 'serie7', 'ultra'],
+        'device': ['fitbit', 'apple'],
+        'timestamp': '18/08/2023'
     }
 
     # Adding specific columns with randomly duplicated or unique values
@@ -183,10 +206,8 @@ def emotional_table_creation_saving():
 
     table_name = "emotional"
     save_table(df_emotional, table_name)
-
-emotional_table_creation_saving()
-
-
+    
+    
 def GenZ_table_creation_saving():
     """
     function to create and save the GenZ table into the postgresql
@@ -194,13 +215,13 @@ def GenZ_table_creation_saving():
     return None
     """
     GenZ_data_to_keep = ['id', 'first_name', 'last_name', 'email', 'gender', 'ip_address',
-        'Adress']
+        'adress']
     df_GenZ = df[GenZ_data_to_keep].copy()
 
     # Dictionary of columns to add with their respective values to duplicate
     columns_to_add = {
-        'Age': [16, 17, 18, 19, 20, 21, 22, 23, 24, 25],
-        'Timestamp': '18/08/2023'
+        'age': [16, 17, 18, 19, 20, 21, 22, 23, 24, 25],
+        'timestamp': '18/08/2023'
     }
 
     # Adding specific columns with randomly duplicated or unique values
@@ -209,7 +230,7 @@ def GenZ_table_creation_saving():
     table_name = "genz"
     save_table(df_GenZ, table_name)
 
-GenZ_table_creation_saving()
+
 
 def GP_table_creation_saving():
     """
@@ -218,16 +239,36 @@ def GP_table_creation_saving():
     return None
     """
 
-    GP_data_to_keep = ['GP first_name', 'GP last_name', 'Country', 'GP address',\
-                       'GP postal_code',
-                    'GP country', 'GP phone_number']
+    GP_data_to_keep = ['id', 'gp first_name', 'gp last_name', 'country', 'gp address',
+                    'gp postal_code', 'gp country', 'gp phone_number']
     df_GP = df[GP_data_to_keep].copy()
 
     # Dictionary of columns to add with their respective values to duplicate
-    columns_to_add = {'Timestamp': '18/08/2023'}
+    columns_to_add = {'timestamp': '18/08/2023'}
     df_GP = Adding_specific_columns_with_randomly_duplicated_or_unique_values(df_GP,columns_to_add)
 
     table_name = "gp"
     save_table(df_GP, table_name)
 
-GP_table_creation_saving()
+
+
+
+data1, data2 = load_data()
+df = data1_preprocessing(data1)
+df = combining_the_two_datasets(df, data2)
+
+#symptoms_table_creation_and_saving()
+#wearable_table_creation()
+
+
+
+#emotional_table_creation_saving()
+
+
+
+
+#GenZ_table_creation_saving()
+
+
+
+#GP_table_creation_saving()
