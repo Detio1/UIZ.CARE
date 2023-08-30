@@ -24,7 +24,6 @@ def save_table(df_table, table_name, db_name='data_sources'):
 
 
 
-
 def   Adding_specific_columns_with_randomly_duplicated_or_unique_values(dataset,columns_to_add):
     """
     function to Add specific columns with randomly duplicated or unique values
@@ -50,12 +49,10 @@ def load_data():
     return: df_training, df_test
     """
     data1 = pd.read_csv(os.path.join(os.getcwd(),"UIZ.CARE_Data_Structure_for_Training ML_Phase_2.csv"), sep = ";", header=0)
-
+    
     data2 = pd.read_csv(os.path.join(os.getcwd(),"UIZ.CARE_Test_Data_August_2023-Vs2.csv"), sep = ";")
     
     return data1, data2
-
-
 
 
 def data1_preprocessing(data1):
@@ -91,14 +88,10 @@ def data1_preprocessing(data1):
     return data1
 
 
-
-
-# Transformation in the second dataframe
+# lowercase column transformation in the  second dataframe
 def transformation_2nd_df(dataframe):
     dataframe.columns = dataframe.columns.str.lower()
     return dataframe
-
-
 
 
 def combining_the_two_datasets(data1, data2):
@@ -121,9 +114,6 @@ def combining_the_two_datasets(data1, data2):
     
     # Convert 'GP postal_code' column to object type in the second DataFrame df_test
     data2['gp postal_code'] = data2['gp postal_code'].astype(data1['gp postal_code'].dtype)
-    
-    # print(data2['gp postal_code'].dtype)
-    # print(data1['gp postal_code'].dtype)
 
     # Concatenating DataFrames horizontally
     df = pd.concat([data1, data2], axis=1)
@@ -131,11 +121,11 @@ def combining_the_two_datasets(data1, data2):
     
     # Removing duplicate columns
     df = df.loc[:, ~df.columns.duplicated()]
-    
+     
     return df
-    
 
-def symptoms_table_creation_and_saving():
+
+def symptoms_table_creation_and_saving(df):
     """
     function to create and save the stymtoms table into the postgresql
     
@@ -150,15 +140,16 @@ def symptoms_table_creation_and_saving():
     # Adding a 'timestamp' column
     df_symptoms['timestamp'] = '18/08/2023'
 
-
+    # lowercase column
+    df_symptoms = transformation_2nd_df(df_symptoms)
+    # print("df_symptoms", df_symptoms)
+    
     # Define the target table name
     table_name = "symptoms"
-    save_table(df_symptoms, table_name)
+    save_table(df_symptoms, table_name)  
     
     
-    
-    
-def wearable_table_creation():
+def wearable_table_creation(df):
     """
     function to create and save the wearable table into the postgresql
     
@@ -179,10 +170,11 @@ def wearable_table_creation():
     # Adding specific columns with randomly duplicated or unique values
     df_wearable = Adding_specific_columns_with_randomly_duplicated_or_unique_values(df_wearable,columns_to_add)
 
+    # print(df_wearable)
     table_name = "wearable"
     save_table(df_wearable, table_name)
     
-def emotional_table_creation_saving():
+def emotional_table_creation_saving(df):
     """
     function to create and save the wearable table into the postgresql
     
@@ -204,11 +196,12 @@ def emotional_table_creation_saving():
     # Adding specific columns with randomly duplicated or unique values
     df_emotional = Adding_specific_columns_with_randomly_duplicated_or_unique_values(df_emotional,columns_to_add)
 
+    # print(df)
     table_name = "emotional"
     save_table(df_emotional, table_name)
     
     
-def GenZ_table_creation_saving():
+def GenZ_table_creation_saving(df):
     """
     function to create and save the GenZ table into the postgresql
     
@@ -232,7 +225,7 @@ def GenZ_table_creation_saving():
 
 
 
-def GP_table_creation_saving():
+def GP_table_creation_saving(df):
     """
     function to create and save the GP table into the postgresql
     
@@ -246,7 +239,10 @@ def GP_table_creation_saving():
     # Dictionary of columns to add with their respective values to duplicate
     columns_to_add = {'timestamp': '18/08/2023'}
     df_GP = Adding_specific_columns_with_randomly_duplicated_or_unique_values(df_GP,columns_to_add)
-
+    # remove white space
+    df_GP.columns = df_GP.columns.str.replace(' ', '_')
+    
+    # df.columns = df.columns.str.replace(' ', '_')
     table_name = "gp"
     save_table(df_GP, table_name)
 
@@ -256,19 +252,8 @@ def GP_table_creation_saving():
 data1, data2 = load_data()
 df = data1_preprocessing(data1)
 df = combining_the_two_datasets(df, data2)
-
-#symptoms_table_creation_and_saving()
-#wearable_table_creation()
-
-
-
-#emotional_table_creation_saving()
-
-
-
-
-#GenZ_table_creation_saving()
-
-
-
-#GP_table_creation_saving()
+symptoms_table_creation_and_saving(df)
+wearable_table_creation(df)
+emotional_table_creation_saving(df)
+GenZ_table_creation_saving(df)
+GP_table_creation_saving(df)
