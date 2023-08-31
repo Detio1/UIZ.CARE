@@ -12,7 +12,7 @@ default_args = {
 }
 
 with DAG(
-    'from csv_to el.py',
+    'task_1',
     default_args = default_args,
     start_date = datetime(2023, 8, 30),
     schedule_interval = '@daily'

@@ -1,5 +1,5 @@
 from airflow import DAG
-#from airflow.decorators import task
+from airflow.decorators import task
 from datetime import timedelta, datetime
 from EL import *
 
@@ -18,7 +18,7 @@ with DAG(
     schedule_interval = '@daily'
 )as dag:
     
-    #@task()
+    @task()
     def execute_extract_load():
         data1, data2 = load_data()
         df = data1_preprocessing(data1)
